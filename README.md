@@ -1,12 +1,12 @@
 # mikrotik-speedtest
 
-A small multi-arch image (amd64, arm64, arm/v7) for running the
+A small multi-arch image (amd64, arm64, arm/v7, arm/v5) for running the
 [Ookla Speedtest CLI](https://www.speedtest.net/apps/cli) as a RouterOS container, so you can
 measure the WAN from the router itself.
 
-The image does not contain Ookla's binary, because its licence does not allow redistribution. On
-first run the entrypoint downloads the right build from `install.speedtest.net` into
-`/opt/speedtest`. RouterOS keeps the container's root directory between runs, so later runs reuse
+The image does not contain Ookla's binary, because its licence does not allow redistribution. It
+holds only a small static Go launcher and CA certificates. On first run the launcher downloads the
+right build from `install.speedtest.net` into `/opt/speedtest`, then runs it. RouterOS keeps the container's root directory between runs, so later runs reuse
 it. Running the image means you accept Ookla's [EULA](https://www.speedtest.net/about/eula) and
 [privacy policy](https://www.speedtest.net/about/privacy).
 
@@ -51,6 +51,10 @@ CLI flags, such as a specific server or JSON output, set `cmd`:
 /container/set [find root-dir=speedtest] cmd="--server-id=12345 --format=json"
 ```
 
+32-bit ARM RouterOS devices such as the hEX ask the registry for `arm/v5`, and their kernel
+cannot run armv7 binaries, so the launcher is built for armv5 and fetches Ookla's soft-float
+`armel` build on 32-bit ARM.
+
 ## Reading the result
 
 The test runs on the router's CPU, and its traffic goes through the router's NAT and firewall like
@@ -61,6 +65,6 @@ router's limit, not your ISP's.
 ## Build locally
 
 ```
-docker buildx build --platform linux/arm/v7 -t mikrotik-speedtest --load .
+docker buildx build --platform linux/arm/v5 -t mikrotik-speedtest --load .
 docker run --rm mikrotik-speedtest
 ```
